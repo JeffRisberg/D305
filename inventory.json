@@ -1,0 +1,63 @@
+[
+  {
+    "name": "Inventory",
+    "children": [
+      {
+        "name": "Talent",
+        "children": [
+          {
+            "name": "Experience",
+            "quantity": 20
+          },
+          {
+            "name": "Money",
+            "quantity": 30
+          },
+          {
+            "name": "Accuracy",
+            "quantity": 40
+          },
+          {
+            "name": "Score",
+            "quantity": 25
+          }
+        ]
+      },
+
+      {
+        "name": "Item",
+        "children": [
+          {
+            "name": "Accuracy",
+            "quantity": 20
+          },
+          {
+            "name": "HalfBlood",
+            "quantity": 30
+          },
+          {
+            "name": "RecoverDuration",
+            "quantity": 20
+          },
+          {
+            "name": "Shield",
+            "quantity": 25
+          },
+          {
+            "name": "ScoreDouble",
+            "quantity": 25
+          },
+          {
+            "name": "Combo",
+            "quantity": 50
+          },
+          {
+            "name": "Pass100",
+            "quantity": 50
+          }
+        ]
+      }
+    ]
+  }
+
+]
