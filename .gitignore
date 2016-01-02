@@ -3,3 +3,8 @@
 */logs/!index.html
 */cache/*
 */cache/!index.html
+
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/copyright
+.idea/scala_settings.xml
