@@ -1,4 +1,4 @@
-[
+
   {
     "name": "Inventory",
     "children": [
@@ -7,19 +7,19 @@
         "children": [
           {
             "name": "Experience",
-            "quantity": 20
+            "value": 20
           },
           {
             "name": "Money",
-            "quantity": 30
+            "value": 30
           },
           {
             "name": "Accuracy",
-            "quantity": 40
+            "value": 40
           },
           {
             "name": "Score",
-            "quantity": 25
+            "value": 25
           }
         ]
       },
@@ -29,35 +29,33 @@
         "children": [
           {
             "name": "Accuracy",
-            "quantity": 20
+            "value": 20
           },
           {
             "name": "HalfBlood",
-            "quantity": 30
+            "value": 30
           },
           {
             "name": "RecoverDuration",
-            "quantity": 20
+            "value": 20
           },
           {
             "name": "Shield",
-            "quantity": 25
+            "value": 25
           },
           {
             "name": "ScoreDouble",
-            "quantity": 25
+            "value": 25
           },
           {
             "name": "Combo",
-            "quantity": 50
+            "value": 50
           },
           {
             "name": "Pass100",
-            "quantity": 50
+            "value": 50
           }
         ]
       }
     ]
   }
-
-]
