@@ -46,9 +46,9 @@
 
 <script type="text/javascript">
 
-  var width = 760,
+  var width = 600,
     height = 600,
-    radius = Math.min(width - 30, height - 30) / 2;
+    radius = width / 6;
 
   var x = d3.scaleLinear()
     .range([0, 2 * Math.PI]);
@@ -58,20 +58,22 @@
 
   var format = d3.format(",d");
 
-
-  var partition = data => d3.partition()
-    .size([2 * Math.PI, radius])
-    (d3.hierarchy(data)
+  var partition = data => {
+    const root = d3.hierarchy(data)
       .sum(d => d.size)
-    .sort((a, b) => b.value - a.value));
+      .sort((a, b) => b.value - a.value);
+    return d3.partition()
+      .size([2 * Math.PI, root.height + 1])
+      (root);
+  };
 
   var arc = d3.arc()
     .startAngle(d => d.x0)
-  .endAngle(d => d.x1)
-  .padAngle(d => Math.min((d.x1 - d.x0) / 2, 0.005))
-  .padRadius(radius / 2)
-    .innerRadius(d => d.y0)
-  .outerRadius(d => d.y1 - 1);
+    .endAngle(d => d.x1)
+    .padAngle(d => Math.min((d.x1 - d.x0) / 2, 0.005))
+    .padRadius(radius * 1.5)
+    .innerRadius(d => d.y0 * radius)
+    .outerRadius(d => Math.max(d.y0 * radius, d.y1 * radius - 1));
 
   d3.json("inventory.json")
     .then(function(data) {
@@ -80,11 +82,11 @@
 
       const root = partition(data);
 
+      root.each(d => d.current = d);
+
       var svg = d3.select("body").append("svg")
         .attr("width", width)
-        .attr("height", height)
-        .append("g")
-        .attr("transform", "translate(" + width / 2 + "," + (height / 2 + 10) + ")");
+        .attr("height", height);
 
       const g = svg.append("g")
         .attr("transform", `translate(${width / 2},${width / 2})`);
@@ -157,6 +159,7 @@
       }
 
       function arcVisible(d) {
+        console.log(d);
         return d.y1 <= 3 && d.y0 >= 1 && d.x1 > d.x0;
       }
 
