@@ -51,13 +51,13 @@
     height = 600,
     radius = Math.min(width - 30, height - 30) / 2;
 
-  var x = d3.scaleLinear()
+  var x = d3.scale.linear()
     .range([0, 2 * Math.PI]);
 
-  var y = d3.scaleSqrt()
+  var y = d3.scale.sqrt()
     .range([0, radius]);
 
-  var color = d3.scaleOrdinal(d3.schemeCategory20);
+  var color = d3.scale.category20c();
 
   var svg = d3.select("body").append("svg")
     .attr("width", width)
@@ -65,7 +65,7 @@
     .append("g")
     .attr("transform", "translate(" + width / 2 + "," + (height / 2 + 10) + ")");
 
-  var partition = d3.partition()
+  var partition = d3.layout.partition()
     .value(function (d) {
       return d.quantity;
     });
@@ -84,69 +84,68 @@
       return Math.max(0, y(d.y + d.dy));
     });
 
-  d3.json("inventory.json")
-    .then(function (inventoryList) {
-      console.log(error);
-      console.log(inventoryList);
+  d3.json("inventory.json", function (error, inventoryList) {
+    console.log(error);
+    console.log(inventoryList);
 
-      var g = svg.data(inventoryList).selectAll("g")
-        .data(partition.nodes)
-        .enter().append("g");
+    var g = svg.data(inventoryList).selectAll("g")
+      .data(partition.nodes)
+      .enter().append("g");
 
-      //svg:path (arcs are rendered as filled svg:path elements)
-      var path = g.append("path")
-        .attr("d", arc)
-        .style("fill", function (d) {
-          return color(d.name);
-        })
-        .on("click", click)
-        .on("mouseover", function (d) {
-          tooltip.show([d3.event.clientX, d3.event.clientY], '<div>' + d.name + '</div><div>' + d.value + '</div>')
-        })
-        .on('mouseout', function () {
-          tooltip.cleanup()
-        })
-        .each(stash);
+    //svg:path (arcs are rendered as filled svg:path elements)
+    var path = g.append("path")
+      .attr("d", arc)
+      .style("fill", function (d) {
+        return color(d.name);
+      })
+      .on("click", click)
+      .on("mouseover", function (d) {
+        tooltip.show([d3.event.clientX, d3.event.clientY], '<div>' + d.name + '</div><div>' + d.value + '</div>')
+      })
+      .on('mouseout', function () {
+        tooltip.cleanup()
+      })
+      .each(stash);
 
-      //Text are rendered, but they do not yet align with an arc’s angle span
-      var text = g.append("text")
-        .attr("transform", function (d) {
-          return "rotate(" + computeTextRotation(d) + ")";
-        })
-        .attr("x", function (d) {
-          return y(d.y);
-        })
-        .attr("dx", "6") // margin
-        .attr("dy", ".35em") // vertical-align
-        .text(function (d) {
-          return d.name;
+    //Text are rendered, but they do not yet align with an arc’s angle span
+    var text = g.append("text")
+      .attr("transform", function (d) {
+        return "rotate(" + computeTextRotation(d) + ")";
+      })
+      .attr("x", function (d) {
+        return y(d.y);
+      })
+      .attr("dx", "6") // margin
+      .attr("dy", ".35em") // vertical-align
+      .text(function (d) {
+        return d.name;
+      });
+
+    function click(d) {
+      // fade out all text elements
+      text.transition().attr("opacity", 0);
+
+      path.transition()
+        .duration(750)
+        .attrTween("d", arcTween(d))
+        .each("end", function (e, i) {
+          // check if the animated element's data e lies within the visible angle span given in d
+          if (e.x >= d.x && e.x < (d.x + d.dx)) {
+            // get a selection of the associated text element
+            var arcText = d3.select(this.parentNode).select("text");
+            // fade in the text element and recalculate positions
+            arcText.transition().duration(750)
+              .attr("opacity", 1)
+              .attr("transform", function () {
+                return "rotate(" + computeTextRotation(e) + ")"
+              })
+              .attr("x", function (d) {
+                return y(d.y);
+              });
+          }
         });
-
-      function click(d) {
-        // fade out all text elements
-        text.transition().attr("opacity", 0);
-
-        path.transition()
-          .duration(750)
-          .attrTween("d", arcTween(d))
-          .each("end", function (e, i) {
-            // check if the animated element's data e lies within the visible angle span given in d
-            if (e.x >= d.x && e.x < (d.x + d.dx)) {
-              // get a selection of the associated text element
-              var arcText = d3.select(this.parentNode).select("text");
-              // fade in the text element and recalculate positions
-              arcText.transition().duration(750)
-                .attr("opacity", 1)
-                .attr("transform", function () {
-                  return "rotate(" + computeTextRotation(e) + ")"
-                })
-                .attr("x", function (d) {
-                  return y(d.y);
-                });
-            }
-          });
-      }
-    });
+    }
+  });
 
   d3.select(self.frameElement).style("height", height + "px");
 
