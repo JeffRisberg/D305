@@ -46,31 +46,31 @@
 
 <script type="text/javascript">
 
-// Extended from  Mike Bostock's Zoomable Sunburst example to include tool-tip and text
-var width = 760,
+  // Extended from  Mike Bostock's Zoomable Sunburst example to include tool-tip and text
+  var width = 760,
     height = 600,
     radius = Math.min(width - 30, height - 30) / 2;
 
-var x = d3.scale.linear()
+  var x = d3.scaleLinear()
     .range([0, 2 * Math.PI]);
 
-var y = d3.scale.sqrt()
+  var y = d3.scaleSqrt()
     .range([0, radius]);
 
-var color = d3.scale.category20c();
+  var color = d3.scaleOrdinal(d3.schemeCategory20);
 
-var svg = d3.select("body").append("svg")
+  var svg = d3.select("body").append("svg")
     .attr("width", width)
     .attr("height", height)
     .append("g")
     .attr("transform", "translate(" + width / 2 + "," + (height / 2 + 10) + ")");
 
-var partition = d3.layout.partition()
+  var partition = d3.partition()
     .value(function (d) {
       return d.quantity;
     });
 
-var arc = d3.svg.arc()
+  var arc = d3.svg.arc()
     .startAngle(function (d) {
       return Math.max(0, Math.min(2 * Math.PI, x(d.x)));
     })
@@ -84,57 +84,58 @@ var arc = d3.svg.arc()
       return Math.max(0, y(d.y + d.dy));
     });
 
-d3.json("inventory.json", function (error, inventoryList) {
-  console.log(error);
-  console.log(inventoryList);
+  d3.json("inventory.json")
+    .then(function (inventoryList) {
+      console.log(error);
+      console.log(inventoryList);
 
-  var g = svg.data(inventoryList).selectAll("g")
-      .data(partition.nodes)
-      .enter().append("g");
+      var g = svg.data(inventoryList).selectAll("g")
+        .data(partition.nodes)
+        .enter().append("g");
 
-  //svg:path (arcs are rendered as filled svg:path elements)
-  var path = g.append("path")
-      .attr("d", arc)
-      .style("fill", function (d) {
-        return color(d.name);
-      })
-      .on("click", click)
-      .on("mouseover", function (d) {
-        tooltip.show([d3.event.clientX, d3.event.clientY], '<div>' + d.name + '</div><div>' + d.value + '</div>')
-      })
-      .on('mouseout', function () {
-        tooltip.cleanup()
-      })
-      .each(stash);
+      //svg:path (arcs are rendered as filled svg:path elements)
+      var path = g.append("path")
+        .attr("d", arc)
+        .style("fill", function (d) {
+          return color(d.name);
+        })
+        .on("click", click)
+        .on("mouseover", function (d) {
+          tooltip.show([d3.event.clientX, d3.event.clientY], '<div>' + d.name + '</div><div>' + d.value + '</div>')
+        })
+        .on('mouseout', function () {
+          tooltip.cleanup()
+        })
+        .each(stash);
 
-  //Text are rendered, but they do not yet align with an arc’s angle span
-  var text = g.append("text")
-      .attr("transform", function (d) {
-        return "rotate(" + computeTextRotation(d) + ")";
-      })
-      .attr("x", function (d) {
-        return y(d.y);
-      })
-      .attr("dx", "6") // margin
-      .attr("dy", ".35em") // vertical-align
-      .text(function (d) {
-        return d.name;
-      });
+      //Text are rendered, but they do not yet align with an arc’s angle span
+      var text = g.append("text")
+        .attr("transform", function (d) {
+          return "rotate(" + computeTextRotation(d) + ")";
+        })
+        .attr("x", function (d) {
+          return y(d.y);
+        })
+        .attr("dx", "6") // margin
+        .attr("dy", ".35em") // vertical-align
+        .text(function (d) {
+          return d.name;
+        });
 
-  function click(d) {
-    // fade out all text elements
-    text.transition().attr("opacity", 0);
+      function click(d) {
+        // fade out all text elements
+        text.transition().attr("opacity", 0);
 
-    path.transition()
-        .duration(750)
-        .attrTween("d", arcTween(d))
-        .each("end", function (e, i) {
-          // check if the animated element's data e lies within the visible angle span given in d
-          if (e.x >= d.x && e.x < (d.x + d.dx)) {
-            // get a selection of the associated text element
-            var arcText = d3.select(this.parentNode).select("text");
-            // fade in the text element and recalculate positions
-            arcText.transition().duration(750)
+        path.transition()
+          .duration(750)
+          .attrTween("d", arcTween(d))
+          .each("end", function (e, i) {
+            // check if the animated element's data e lies within the visible angle span given in d
+            if (e.x >= d.x && e.x < (d.x + d.dx)) {
+              // get a selection of the associated text element
+              var arcText = d3.select(this.parentNode).select("text");
+              // fade in the text element and recalculate positions
+              arcText.transition().duration(750)
                 .attr("opacity", 1)
                 .attr("transform", function () {
                   return "rotate(" + computeTextRotation(e) + ")"
@@ -142,66 +143,66 @@ d3.json("inventory.json", function (error, inventoryList) {
                 .attr("x", function (d) {
                   return y(d.y);
                 });
-          }
-        });
+            }
+          });
+      }
+    });
+
+  d3.select(self.frameElement).style("height", height + "px");
+
+  // Stash the old values for transition.
+  function stash(d) {
+    d.x0 = d.x;
+    d.dx0 = d.dx;
   }
-});
 
-d3.select(self.frameElement).style("height", height + "px");
+  // Interpolate the scales!
 
-// Stash the old values for transition.
-function stash(d) {
-  d.x0 = d.x;
-  d.dx0 = d.dx;
-}
-
-// Interpolate the scales!
-
-// Interpolate the scales!
-function arcTween(d) {
-  var xd = d3.interpolate(x.domain(), [d.x, d.x + d.dx]),
+  // Interpolate the scales!
+  function arcTween(d) {
+    var xd = d3.interpolate(x.domain(), [d.x, d.x + d.dx]),
       yd = d3.interpolate(y.domain(), [d.y, 1]),
       yr = d3.interpolate(y.range(), [d.y ? 20 : 0, radius]);
-  return function (d, i) {
-    return i
+    return function (d, i) {
+      return i
         ? function (t) {
-      return arc(d);
-    }
+          return arc(d);
+        }
         : function (t) {
-      x.domain(xd(t));
-      y.domain(yd(t)).range(yr(t));
-      return arc(d);
+          x.domain(xd(t));
+          y.domain(yd(t)).range(yr(t));
+          return arc(d);
+        };
     };
-  };
-}
+  }
 
-//compute text rotation ( code from stackoverflow)
-function computeTextRotation(d) {
-  return (x(d.x + d.dx / 2) - Math.PI / 2) / Math.PI * 180;
-}
+  //compute text rotation ( code from stackoverflow)
+  function computeTextRotation(d) {
+    return (x(d.x + d.dx / 2) - Math.PI / 2) / Math.PI * 180;
+  }
 
-/*****
- * A no frills tooltip implementation.
- *****/
+  /*****
+   * A no frills tooltip implementation.
+   *****/
 
-(function () {
+  (function () {
 
-  var tooltip = window.tooltip = {}
+    var tooltip = window.tooltip = {}
 
-  tooltip.show = function (pos, content, gravity, dist, parentContainer, classes) {
+    tooltip.show = function (pos, content, gravity, dist, parentContainer, classes) {
 
-    var container = d3.select('body').selectAll('.tooltip').data([1])
+      var container = d3.select('body').selectAll('.tooltip').data([1])
 
-    container.enter().append('div').attr('class', 'tooltip ' + (classes ? classes : 'xy-tooltip'))
+      container.enter().append('div').attr('class', 'tooltip ' + (classes ? classes : 'xy-tooltip'))
 
-    container.html(content)
+      container.html(content)
 
-    gravity = gravity || 'n'
-    dist = dist || 20
+      gravity = gravity || 'n'
+      dist = dist || 20
 
-    var body = document.getElementsByTagName('body')[0]
+      var body = document.getElementsByTagName('body')[0]
 
-    var height = parseInt(container[0][0].offsetHeight)
+      var height = parseInt(container[0][0].offsetHeight)
         , width = parseInt(container[0][0].offsetWidth)
         , windowWidth = window.innerWidth
         , windowHeight = window.innerHeight
@@ -210,49 +211,49 @@ function computeTextRotation(d) {
         , left = 0
         , top = 0
 
-    switch (gravity) {
-      case 'e':
-        left = pos[0] - width - dist
-        top = pos[1] - (height / 2)
-        if (left < scrollLeft) left = pos[0] + dist
-        if (top < scrollTop) top = scrollTop + 5
-        if (top + height > scrollTop + windowHeight) top = scrollTop - height - 5
-        break
-      case 'w':
-        left = pos[0] + dist
-        top = pos[1] - (height / 2)
-        if (left + width > windowWidth) left = pos[0] - width - dist
-        if (top < scrollTop) top = scrollTop + 5
-        if (top + height > scrollTop + windowHeight) top = scrollTop - height - 5
-        break
-      case 's':
-        left = pos[0] - (width / 2)
-        top = pos[1] + dist
-        if (left < scrollLeft) left = scrollLeft + 5
-        if (left + width > windowWidth) left = windowWidth - width - 5
-        if (top + height > scrollTop + windowHeight) top = pos[1] - height - dist
-        break
-      case 'n':
-        left = pos[0] - (width / 2)
-        top = pos[1] - height - dist
-        if (left < scrollLeft) left = scrollLeft + 5
-        if (left + width > windowWidth) left = windowWidth - width - 5
-        if (scrollTop > top) top = pos[1] + 20
-        break
+      switch (gravity) {
+        case 'e':
+          left = pos[0] - width - dist
+          top = pos[1] - (height / 2)
+          if (left < scrollLeft) left = pos[0] + dist
+          if (top < scrollTop) top = scrollTop + 5
+          if (top + height > scrollTop + windowHeight) top = scrollTop - height - 5
+          break
+        case 'w':
+          left = pos[0] + dist
+          top = pos[1] - (height / 2)
+          if (left + width > windowWidth) left = pos[0] - width - dist
+          if (top < scrollTop) top = scrollTop + 5
+          if (top + height > scrollTop + windowHeight) top = scrollTop - height - 5
+          break
+        case 's':
+          left = pos[0] - (width / 2)
+          top = pos[1] + dist
+          if (left < scrollLeft) left = scrollLeft + 5
+          if (left + width > windowWidth) left = windowWidth - width - 5
+          if (top + height > scrollTop + windowHeight) top = pos[1] - height - dist
+          break
+        case 'n':
+          left = pos[0] - (width / 2)
+          top = pos[1] - height - dist
+          if (left < scrollLeft) left = scrollLeft + 5
+          if (left + width > windowWidth) left = windowWidth - width - 5
+          if (scrollTop > top) top = pos[1] + 20
+          break
+      }
+
+      container.style('left', left + 'px')
+      container.style('top', top + 'px')
+
+      return container
     }
 
-    container.style('left', left + 'px')
-    container.style('top', top + 'px')
+    tooltip.cleanup = function () {
+      // Find the tooltips, mark them for removal by this class (so other tooltip functions won't find it)
+      var tooltips = d3.selectAll('.tooltip').attr('class', 'tooltip-pending-removal').transition().duration(250).style('opacity', 0).remove()
 
-    return container
-  }
-
-  tooltip.cleanup = function () {
-    // Find the tooltips, mark them for removal by this class (so other tooltip functions won't find it)
-    var tooltips = d3.selectAll('.tooltip').attr('class', 'tooltip-pending-removal').transition().duration(250).style('opacity', 0).remove()
-
-  }
-})()
+    }
+  })()
 
 
 </script>
